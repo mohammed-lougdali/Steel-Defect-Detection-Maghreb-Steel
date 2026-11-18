@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédiction de défauts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1, h2, h3 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            margin-top: 20px;
+            display: grid; /* Utilisation de la grille pour le formulaire */
+            grid-template-columns: repeat(2, 1fr); /* Deux colonnes de largeur égale */
+            gap: 15px; /* Espacement entre les champs */
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-container label {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .input-container input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .input-container input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 10px;
+            grid-column: span 2; /* Le bouton s'étend sur les deux colonnes */
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            background: #e6f7ff;
+            border: 1px solid #b3d8ff;
+            
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+
+        }
+        .result ul {
+            display: flex;
+            flex-wrap: wrap; /* Permet de répartir les éléments sur plusieurs lignes */
+            padding-left: 0; /* Supprime l'indentation par défaut */
+            list-style-type: none; /* Supprime les puces de la liste */
+        }
+        .result li {
+            width: 25%; /* Chaque élément de la liste occupera 50% de la largeur */
+            margin-bottom: 5px; /* Espacement entre les éléments de la liste */
+            color: #333; /* Couleur du texte */
+            padding: 5px; /* Espacement interne pour chaque élément */
+            box-sizing: border-box; /* Inclut le padding dans la largeur totale */
+        }
+        .prediction {
+            display: inline-block; /* Permet d'appliquer le margin-left */
+            margin-left: auto; /* Pousse le texte à droite */
+            text-align: right; /* Assure que le texte est aligné à droite */
+            width: 100%; /* Prend toute la largeur disponible */
+        }
+    </style>
+    <script>
+        function fillExampleValues() {
+            const examples = [
+                {
+                    "X_Minimum": 1058.0, "Y_Minimum": 3522485.0, "Y_Perimeter": 27.0, 
+                    "Minimum_of_Luminosity": 84.0, "Maximum_of_Luminosity": 117.0, 
+                    "Length_of_Conveyer": 1364.0, "TypeOfSteel_A300": 1.0, 
+                    "Steel_Plate_Thickness": 80.0, "Edges_Index": 0.4106, 
+                    "Empty_Index": 0.6722, "Square_Index": 0.8846, 
+                    "Outside_X_Index": 0.0191, "Edges_X_Index": 0.6842, 
+                    "Edges_Y_Index": 0.8518, "Outside_Global_Index": 0.0, 
+                    "Log_X_Index": 1.4150, "Orientation_Index": -0.1154, 
+                    "Luminosity_Index": -0.2415, "SigmoidOfAreas": 0.8778
+                },
+                {
+                    "X_Minimum": 505.0, "Y_Minimum": 1998060.0, "Y_Perimeter": 6.0, 
+                    "Minimum_of_Luminosity": 116.0, "Maximum_of_Luminosity": 126.0, 
+                    "Length_of_Conveyer": 1358.0, "TypeOfSteel_A300": 0.0, 
+                    "Steel_Plate_Thickness": 50.0, "Edges_Index": 0.7437, 
+                    "Empty_Index": 0.5735, "Square_Index": 0.2353, 
+                    "Outside_X_Index": 0.0125, "Edges_X_Index": 0.9444, 
+                    "Edges_Y_Index": 0.6667, "Outside_Global_Index": 0.0, 
+                    "Log_X_Index": 1.2305, "Orientation_Index": -0.7647, 
+                    "Luminosity_Index": -0.0601, "SigmoidOfAreas": 0.1734
+                },
+                {
+                    "X_Minimum": 661.0, "Y_Minimum": 2183073.0, "Y_Perimeter": 11.0, 
+                    "Minimum_of_Luminosity": 78.0, "Maximum_of_Luminosity": 116.0, 
+                    "Length_of_Conveyer": 1362.0, "TypeOfSteel_A300": 1.0, 
+                    "Steel_Plate_Thickness": 120.0, "Edges_Index": 0.9706, 
+                    "Empty_Index": 0.2159, "Square_Index": 0.7273, 
+                    "Outside_X_Index": 0.0059, "Edges_X_Index": 0.7273, 
+                    "Edges_Y_Index": 1.0, "Outside_Global_Index": 1.0, 
+                    "Log_X_Index": 0.9031, "Orientation_Index": 0.2727, 
+                    "Luminosity_Index": -0.2288, "SigmoidOfAreas": 0.1934
+                },
+                {
+                    "X_Minimum": 476.0, "Y_Minimum": 13302.0, "Y_Perimeter": 18.0, 
+                    "Minimum_of_Luminosity": 36.0, "Maximum_of_Luminosity": 127.0, 
+                    "Length_of_Conveyer": 1373.0, "TypeOfSteel_A300": 0.0, 
+                    "Steel_Plate_Thickness": 40.0, "Edges_Index": 0.6934, 
+                    "Empty_Index": 0.0992, "Square_Index": 0.7778, 
+                    "Outside_X_Index": 0.0102, "Edges_X_Index": 1.0, 
+                    "Edges_Y_Index": 1.0, "Outside_Global_Index": 1.0, 
+                    "Log_X_Index": 1.1461, "Orientation_Index": 0.2222, 
+                    "Luminosity_Index": -0.2698, "SigmoidOfAreas": 0.4170
+                }
+            ];
+
+            // Sélection d'un exemple aléatoire
+            const randomExample = examples[Math.floor(Math.random() * examples.length)];
+
+            // Remplissage des champs avec les valeurs de l'exemple aléatoire
+            for (const key in randomExample) {
+                if (document.getElementById(key)) {
+                    document.getElementById(key).value = randomExample[key];
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Fault Prediction : Steel Plates</h1>
+        <h2>Enter values</h2>
+        <button type="button" class="btn" onclick="fillExampleValues()">Fill in with a random example to test the models</button>
+        <form action="/main" method="post">
+            <div class="input-container">
+                <label for="X_Minimum">X Minimum</label>
+                <input type="number" id="X_Minimum" name="X_Minimum" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Y_Minimum">Y Minimum</label>
+                <input type="number" id="Y_Minimum" name="Y_Minimum" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Y_Perimeter">Y Perimeter</label>
+                <input type="number" id="Y_Perimeter" name="Y_Perimeter" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Minimum_of_Luminosity">Minimum of Luminosity</label>
+                <input type="number" id="Minimum_of_Luminosity" name="Minimum_of_Luminosity" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Maximum_of_Luminosity">Maximum of Luminosity</label>
+                <input type="number" id="Maximum_of_Luminosity" name="Maximum_of_Luminosity" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Length_of_Conveyer">Length of Conveyer</label>
+                <input type="number" id="Length_of_Conveyer" name="Length_of_Conveyer" step="any">
+            </div>
+            <div class="input-container">
+                <label for="TypeOfSteel_A300">Type Of Steel A300</label>
+                <input type="number" id="TypeOfSteel_A300" name="TypeOfSteel_A300" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Steel_Plate_Thickness">Steel Plate Thickness</label>
+                <input type="number" id="Steel_Plate_Thickness" name="Steel_Plate_Thickness" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Edges_Index">Edges Index</label>
+                <input type="number" id="Edges_Index" name="Edges_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Empty_Index">Empty Index</label>
+                <input type="number" id="Empty_Index" name="Empty_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Square_Index">Square Index</label>
+                <input type="number" id="Square_Index" name="Square_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Outside_X_Index">Outside X Index</label>
+                <input type="number" id="Outside_X_Index" name="Outside_X_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Edges_X_Index">Edges X Index</label>
+                <input type="number" id="Edges_X_Index" name="Edges_X_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Edges_Y_Index">Edges Y Index</label>
+                <input type="number" id="Edges_Y_Index" name="Edges_Y_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Outside_Global_Index">Outside Global Index</label>
+                <input type="number" id="Outside_Global_Index" name="Outside_Global_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Log_X_Index">Log X Index</label>
+                <input type="number" id="Log_X_Index" name="Log_X_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Orientation_Index">Orientation Index</label>
+                <input type="number" id="Orientation_Index" name="Orientation_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="Luminosity_Index">Luminosity Index</label>
+                <input type="number" id="Luminosity_Index" name="Luminosity_Index" step="any">
+            </div>
+            <div class="input-container">
+                <label for="SigmoidOfAreas">Sigmoid Of Areas</label>
+                <input type="number" id="SigmoidOfAreas" name="SigmoidOfAreas" step="any">
+            </div>
+            <button type="submit" class="btn">Submit</button>
+        </form>
+    </div>
+    {% if predictions %}
+        <div class="result">
+            <h3>Résultat de la Prédiction :</h3>
+            <ul>
+                {% for model, prediction in predictions.items() %}
+                    <li><strong>{{ model }}</strong>: {{ prediction }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</body>
+</html>

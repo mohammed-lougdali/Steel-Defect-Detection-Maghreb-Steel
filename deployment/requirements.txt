@@ -1,0 +1,11 @@
+Flask
+tensorflow==2.17.0
+keras
+scikit-learn
+numpy
+joblib
+pandas
+matplotlib
+seaborn
+xgboost
+gunicorn
